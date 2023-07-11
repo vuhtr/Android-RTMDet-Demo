@@ -34,7 +34,7 @@ public class MainActivity extends AppCompatActivity {
     private static final int MAX_INPUT_SIZE = 1024;     // avoid OOM for large image
 
     //    Constants for Object Detection
-    private static final int INFER_SIZE = 640;
+    private static int INFER_SIZE;
     private static final int[] MASK_COLOR = {255, 0, 0};    // red
     private static final int[] BOX_COLOR = {0, 255, 0};     // green
 
@@ -47,9 +47,13 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        // Uncomment to change model
-        objectDetector = new ObjectDetector(getResources(), R.raw.classes, R.raw.rtmdetins_tiny_640_f16, INFER_SIZE, 0.3F, 0.25F);
-//        objectDetector = new ObjectDetector(getResources(), R.raw.classes, R.raw.rtmdetins_s_640_f16, INFER_SIZE, 0.35F, 0.25F);
+        // Uncomment each pair to change model
+//        INFER_SIZE = 640;
+//        objectDetector = new ObjectDetector(getResources(), R.raw.classes, R.raw.rtmdet_tiny_640_f16, INFER_SIZE, 0.35F, 0.25F);
+//        INFER_SIZE = 800;
+//        objectDetector = new ObjectDetector(getResources(), R.raw.classes, R.raw.rtmdet_tiny_800_f16, INFER_SIZE, 0.35F, 0.2F);
+        INFER_SIZE = 640;
+        objectDetector = new ObjectDetector(getResources(), R.raw.classes, R.raw.rtmdet_s_640_f16, INFER_SIZE, 0.35F, 0.2F);
 
         initViews();
         setupEvents();
@@ -74,7 +78,13 @@ public class MainActivity extends AppCompatActivity {
         detectBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Bitmap bm = ((BitmapDrawable)inputImageView.getDrawable()).getBitmap();
+                Bitmap bm = null;
+                try {
+                    bm = ((BitmapDrawable)inputImageView.getDrawable()).getBitmap();
+                } catch (Exception e) {
+                    Snackbar.make(view, "Please select an image first", Snackbar.LENGTH_LONG).show();
+                    return;
+                }
                 try {
                     ObjectDetector.DetectionResult result = objectDetector.infer(bm);
                     System.out.println("[LOG] Number of detected objects: " + result.scores.size());
@@ -123,7 +133,6 @@ public class MainActivity extends AppCompatActivity {
                         if (result.getResultCode() == Activity.RESULT_OK) {
                             Intent data = result.getData();
                             Bitmap bitmap = ImageUtils.getImageFromPickerIntent(MainActivity.this, data);
-                            bitmap = ImageUtils.resizeKeepRatio(bitmap, MAX_INPUT_SIZE);
                             setInputImage(bitmap);
                         }
                     }
@@ -133,6 +142,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void setInputImage(Bitmap bitmap) {
         inputImageView.setImageBitmap(bitmap);
+        outputImageView.setImageBitmap(null);
     }
 
     private void setOutputImage(Bitmap bitmap) {
