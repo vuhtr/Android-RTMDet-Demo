@@ -22,8 +22,6 @@ import android.widget.ImageView;
 
 import com.google.android.material.snackbar.Snackbar;
 
-import java.nio.FloatBuffer;
-
 import ai.onnxruntime.OrtException;
 
 public class MainActivity extends AppCompatActivity {
@@ -31,7 +29,7 @@ public class MainActivity extends AppCompatActivity {
 //    private static final int MY_CAMERA_REQUEST_CODE = 100;
     private static final int MY_GALLERY_REQUEST_CODE = 101;
 
-    private static final int MAX_INPUT_SIZE = 1024;     // avoid OOM for large image
+    private static final int MAX_INPUT_SIZE = 1200;     // avoid OOM for large image
 
     //    Constants for Object Detection
     private static int INFER_SIZE;
@@ -48,12 +46,10 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         // Uncomment each pair to change model
-//        INFER_SIZE = 640;
-//        objectDetector = new ObjectDetector(getResources(), R.raw.classes, R.raw.rtmdet_tiny_640_f16, INFER_SIZE, 0.35F, 0.25F);
 //        INFER_SIZE = 800;
-//        objectDetector = new ObjectDetector(getResources(), R.raw.classes, R.raw.rtmdet_tiny_800_f16, INFER_SIZE, 0.35F, 0.2F);
+//        objectDetector = new ObjectDetector(getResources(), R.raw.classes, R.raw.rtmdetins_tiny_800_f16, INFER_SIZE, 0.35F, 0.2F);
         INFER_SIZE = 640;
-        objectDetector = new ObjectDetector(getResources(), R.raw.classes, R.raw.rtmdet_s_640_f16, INFER_SIZE, 0.35F, 0.2F);
+        objectDetector = new ObjectDetector(getResources(), R.raw.classes, R.raw.rtmdetins_s_640_f16, INFER_SIZE, 0.325F, 0.2F);
 
         initViews();
         setupEvents();
@@ -87,7 +83,6 @@ public class MainActivity extends AppCompatActivity {
                 }
                 try {
                     ObjectDetector.DetectionResult result = objectDetector.infer(bm);
-                    System.out.println("[LOG] Number of detected objects: " + result.scores.size());
                     Bitmap outputBm = ImageUtils.drawDetectionResult(result, bm, BOX_COLOR, MASK_COLOR, 0.5f);
                     setOutputImage(outputBm);
 
@@ -133,6 +128,7 @@ public class MainActivity extends AppCompatActivity {
                         if (result.getResultCode() == Activity.RESULT_OK) {
                             Intent data = result.getData();
                             Bitmap bitmap = ImageUtils.getImageFromPickerIntent(MainActivity.this, data);
+                            bitmap = ImageUtils.resizeKeepRatio(bitmap, MAX_INPUT_SIZE);
                             setInputImage(bitmap);
                         }
                     }
@@ -146,6 +142,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void setOutputImage(Bitmap bitmap) {
+        outputImageView.setImageBitmap(null);
         outputImageView.setImageBitmap(bitmap);
     }
 
